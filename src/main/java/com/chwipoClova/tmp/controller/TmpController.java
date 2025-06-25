@@ -26,6 +26,7 @@ public class TmpController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")}
     )
     public List<Tmp> getTmpList() throws Exception {
+        // 테스트1
         return tmpService.selectTmpList();
     }
 }
