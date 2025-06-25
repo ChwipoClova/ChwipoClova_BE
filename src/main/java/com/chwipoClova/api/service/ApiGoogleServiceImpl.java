@@ -53,33 +53,6 @@ public class ApiGoogleServiceImpl implements ApiService {
 
     private final LogRepository logRepository;
 
-    @Value("${api.url.base}")
-    private String apiBaseUrl;
-
-    @Value("${api.url.ocr}")
-    private String ocr;
-
-    @Value("${api.url.count}")
-    private String count;
-
-    @Value("${api.url.resume}")
-    private String resume;
-
-    @Value("${api.url.recruit}")
-    private String recruit;
-
-    @Value("${api.url.question}")
-    private String question;
-
-    @Value("${api.url.feel}")
-    private String feel;
-
-    @Value("${api.url.keyword}")
-    private String keyword;
-
-    @Value("${api.url.best}")
-    private String best;
-
     @Value("${gcp.project-id}")
     private String projectId;
 
