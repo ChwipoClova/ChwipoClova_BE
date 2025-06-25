@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: newapiserver
+    runs-on: ARM64
 
     steps:
       - name: checkout
@@ -49,4 +49,4 @@ jobs:
           docker rm -f be-con || true
           docker rmi $(docker images -f "dangling=true" -q) || true
           docker pull ${{ secrets.DOCKER_REPO }}/chwipoclovadocker:latest
-          docker run -v /var/log/service:/var/log/service -v /var/upload:/var/upload --name be-con -p 8080:8080 -d --restart unless-stopped ${{ secrets.DOCKER_REPO }}/chwipoclovadocker:latest
+          docker run -v /var/log/service:/var/log/service -v /var/upload:/var/upload --name be-con -p 8080:8080 --network=tikitaka-net -d --restart unless-stopped ${{ secrets.DOCKER_REPO }}/chwipoclovadocker:latest
