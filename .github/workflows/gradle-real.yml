@@ -49,4 +49,4 @@ jobs:
           docker rm -f be-con || true
           docker rmi $(docker images -f "dangling=true" -q) || true
           docker pull ${{ secrets.DOCKER_REPO }}/chwipoclovadocker:latest
-          docker run -e GOOGLE_APPLICATION_CREDENTIALS=/home/beuser/google_ocr_key.json -v /var/log/service:/var/log/service -v /var/upload:/var/upload --name be-con -p 8080:8080 --network=tikitaka-net -d --restart unless-stopped ${{ secrets.DOCKER_REPO }}/chwipoclovadocker:latest
+          docker run -v /var/log/service:/var/log/service -v /var/upload:/var/upload -e GOOGLE_APPLICATION_CREDENTIALS=/var/upload/key/google_ocr_key.json --name be-con -p 8080:8080 --network=tikitaka-net -d --restart unless-stopped ${{ secrets.DOCKER_REPO }}/chwipoclovadocker:latest
