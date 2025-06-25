@@ -2,12 +2,29 @@ package com.chwipoClova.common.utils;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 public class FileUtil {
     public static String getOriginalFileExtension(MultipartFile file) throws IOException {
         try (InputStream inputStream = file.getInputStream()) {
+            byte[] buffer = new byte[8]; // 파일의 시작 부분만 읽어올 수 있도록 8바이트로 설정
+            int bytesRead = inputStream.read(buffer);
+
+            if (bytesRead >= 0) {
+                // 파일의 시작 부분에서 8바이트를 읽어온 후, 바이너리 데이터를 16진수 문자열로 변환하여 확인
+                String fileSignature = bytesToHex(buffer, bytesRead);
+                // 실제 파일 시그니처를 기준으로 확장자를 판별하거나 확장자 매핑을 확인할 수 있는 로직 구현
+                return determineFileExtension(fileSignature);
+            }
+        }
+        return "";
+    }
+
+    public static String getOriginalFileExtension(File file) throws IOException {
+        try (InputStream inputStream = new FileInputStream(file)) {
             byte[] buffer = new byte[8]; // 파일의 시작 부분만 읽어올 수 있도록 8바이트로 설정
             int bytesRead = inputStream.read(buffer);
 

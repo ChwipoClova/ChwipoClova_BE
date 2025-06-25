@@ -1,35 +1,28 @@
 package com.chwipoClova.recruit.service;
 
 
+import com.chwipoClova.api.service.ApiService;
 import com.chwipoClova.common.enums.CommonCode;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
-import com.chwipoClova.common.utils.ApiUtils;
 import com.chwipoClova.common.utils.FileUtil;
+import com.chwipoClova.prompt.service.PromptService;
 import com.chwipoClova.recruit.entity.Recruit;
 import com.chwipoClova.recruit.entity.RecruitEditor;
 import com.chwipoClova.recruit.repository.RecruitRepository;
 import com.chwipoClova.recruit.request.RecruitInsertReq;
 import com.chwipoClova.recruit.response.RecruitInsertRes;
-import com.chwipoClova.resume.entity.ResumeEditor;
-import com.chwipoClova.resume.response.ApiRes;
 import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
@@ -57,7 +50,9 @@ public class RecruitService {
 
     private final RecruitRepository recruitRepository;
 
-    private final ApiUtils apiUtils;
+    //private final ApiUtils apiUtils;
+
+    private final ApiService apiService;
 
     @Value("${api.url.base}")
     private String apiBaseUrl;
@@ -71,9 +66,6 @@ public class RecruitService {
     @Value("${api.url.recruit}")
     private String recruit;
 
-    @Value("${api.token_limit.base}")
-    private int apiBaseTokenLimit;
-
     @Value("${recruit.target.word1}")
     private String targetWord1;
 
@@ -86,8 +78,10 @@ public class RecruitService {
     @Value("${recruit.target.word4}")
     private String targetWord4;
 
+    private final PromptService promptService;
+
     @Transactional
-    public RecruitInsertRes insertRecruit(RecruitInsertReq recruitInsertReq) throws IOException {
+    public RecruitInsertRes insertRecruit(RecruitInsertReq recruitInsertReq) throws Exception {
         Long userId = recruitInsertReq.getUserId();
         String recruitContent = recruitInsertReq.getRecruitContent();
         MultipartFile file = recruitInsertReq.getFile();
@@ -99,13 +93,15 @@ public class RecruitService {
         }
 
         Recruit recruit;
+        int apiBaseTokenLimit = promptService.getMaxToken("RC");
 
         if (org.apache.commons.lang3.StringUtils.isNotBlank(recruitContent)) {
+
             // 토큰 수 계산
-            apiUtils.countTokenLimitCk(recruitContent, apiBaseTokenLimit);
+            apiService.countTokenLimitCk(recruitContent, apiBaseTokenLimit);
 
             // 채용공고 요약 실행
-            String summary = apiUtils.summaryRecruit(recruitContent);
+            String summary = apiService.summaryRecruit(recruitContent);
 
             // 채용공고에서 제목 추출
             String title = getRecruitTitle(summary);
@@ -120,7 +116,7 @@ public class RecruitService {
 
             String contentType = FileUtil.getOriginalFileExtension(file);
 
-            if (org.apache.commons.lang3.StringUtils.isBlank(contentType) || contentType.toLowerCase().indexOf(uploadType) == -1) {
+            if (org.apache.commons.lang3.StringUtils.isBlank(contentType) || !contentType.toLowerCase().contains(uploadType)) {
                 throw new CommonException(ExceptionCode.FILE_EXT_IMAGE.getMessage(), ExceptionCode.FILE_EXT_IMAGE.getCode());
             }
 
@@ -142,7 +138,7 @@ public class RecruitService {
             Long fileSize = file.getSize();
 
             if (fileSize > uploadMaxSize) {
-                new CommonException(ExceptionCode.FILE_SIZE.getMessage(), ExceptionCode.FILE_SIZE.getCode());
+                throw new CommonException(ExceptionCode.FILE_SIZE.getMessage(), ExceptionCode.FILE_SIZE.getCode());
             }
 
             // 저장할 파일 이름 중간에 "_"를 이용해서 구현
@@ -150,16 +146,14 @@ public class RecruitService {
             Path savePath = Paths.get(saveName);
             file.transferTo(savePath);
 
-            File saveFile = new File(saveName);
-
             // 채용공고 OCR
-            String resumeTxt = apiUtils.ocr(file);
+            String resumeTxt = apiService.ocr(savePath.toFile());
 
             // 채용공고 OCR 성공 이후 토큰 계산 하여 3000자 이하인자 체크
-            apiUtils.countTokenLimitCk(resumeTxt, apiBaseTokenLimit);
+            apiService.countTokenLimitCk(resumeTxt, apiBaseTokenLimit);
 
             // 채용공고 요약
-            String summary = apiUtils.summaryRecruit(resumeTxt);
+            String summary = apiService.summaryRecruit(resumeTxt);
 
             // 채용공고에서 제목 추출
             String title = getRecruitTitle(summary);
@@ -175,18 +169,21 @@ public class RecruitService {
                     .build();
 
             // 파일 삭제
-            saveFile.delete();
+/*            try {
+                Files.delete(savePath);
+            } catch (IOException e) {
+                log.error("Failed to delete file: {}", savePath, e);
+                throw new CommonException("File deletion failed", ExceptionCode.SERVER_ERROR.getCode());
+            }*/
         }
 
         Recruit recruitRst = recruitRepository.save(recruit);
 
-        RecruitInsertRes recruitInsertRes = RecruitInsertRes.builder()
+        return RecruitInsertRes.builder()
                 .recruitId(recruitRst.getRecruitId())
                 .title(recruitRst.getTitle())
                 .summary(recruitRst.getSummary())
                 .build();
-
-        return recruitInsertRes;
     }
 
     private String getRecruitTitle(String summary) {

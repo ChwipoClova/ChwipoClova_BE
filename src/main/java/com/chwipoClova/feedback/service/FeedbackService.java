@@ -1,11 +1,10 @@
 package com.chwipoClova.feedback.service;
 
-import com.chwipoClova.common.enums.CommonCode;
+import com.chwipoClova.api.service.ApiService;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.response.MessageCode;
-import com.chwipoClova.common.utils.ApiUtils;
 import com.chwipoClova.feedback.entity.Feedback;
 import com.chwipoClova.feedback.entity.FeedbackEditor;
 import com.chwipoClova.feedback.repository.FeedbackRepository;
@@ -17,10 +16,7 @@ import com.chwipoClova.interview.entity.Interview;
 import com.chwipoClova.interview.entity.InterviewEditor;
 import com.chwipoClova.interview.repository.InterviewRepository;
 import com.chwipoClova.qa.entity.Qa;
-import com.chwipoClova.qa.entity.QaEditor;
 import com.chwipoClova.qa.repository.QaRepository;
-import com.chwipoClova.qa.service.QaService;
-import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -47,17 +44,17 @@ public class FeedbackService {
 
     private final UserRepository userRepository;
 
-    private final ApiUtils apiUtils;
+    private final ApiService apiService;
 
     @Transactional
-    public CommonResponse insertFeedback(String allQuestionData, String allAnswerData, List<FeedbackInsertReq> feedbackInsertListReq) throws IOException {
+    public CommonResponse insertFeedback(String allQuestionData, String allAnswerData, List<FeedbackInsertReq> feedbackInsertListReq) {
 
         // TODO 피드백 연동 필요함 답변이 있는 경우만 전달하자
         // 키워드
-        String apiKeywordRst = apiUtils.keyword(allAnswerData);
+        String apiKeywordRst = apiService.keyword(allAnswerData);
 
         // 모범답안
-        String apiBestRst = apiUtils.best(allQuestionData, allAnswerData);
+        String apiBestRst = apiService.best(allQuestionData, allAnswerData);
 
         // 피드백 매핑
         setApiFeedbackData(apiKeywordRst, apiBestRst, feedbackInsertListReq);
@@ -69,7 +66,7 @@ public class FeedbackService {
         List<FeedbackListRes> feedbackListResList = new ArrayList<>();
 
         List<Feedback> feedbackList = feedbackRepository.findByQaQaIdOrderByFeedbackId(qaId);
-        feedbackList.stream().forEach(feedback -> {
+        feedbackList.forEach(feedback -> {
             FeedbackListRes feedbackListRes = FeedbackListRes.builder()
                     .qaId(feedback.getQa().getQaId())
                     .feedbackId(feedback.getFeedbackId())
@@ -100,7 +97,7 @@ public class FeedbackService {
 
         AtomicLong answerCnt = new AtomicLong();
         List<FeedbackInsertReq> feedbackInsertListReq = new ArrayList<>();
-        qaList.stream().forEach(qa -> {
+        qaList.forEach(qa -> {
             String answer = qa.getAnswer();
 
             // 답변 내용이 있을 경우 답변 저장 및 피드백 생성
@@ -127,7 +124,7 @@ public class FeedbackService {
         String allQuestionData = questionStringBuilder.toString().trim();
         String allAnswerData = answerStringBuilder.toString().trim();
         // 면접관의 속마음
-        String apiFeelRst = apiUtils.feel(allAnswerData);
+        String apiFeelRst = apiService.feel(allAnswerData);
         InterviewEditor.InterviewEditorBuilder editorBuilder = interview.toEditor();
         InterviewEditor interviewEditor = editorBuilder.feedback(apiFeelRst).build();
         interview.edit(interviewEditor);
@@ -138,7 +135,7 @@ public class FeedbackService {
     }
 
     private String getDelStartNum(String text) {
-        if (text.indexOf(".") != -1) {
+        if (text.contains(".")) {
             String num = text.substring(0, text.indexOf("."));
             if (org.apache.commons.lang3.StringUtils.isNumeric(num)) {
                 return text.substring(text.indexOf(".") + 1).trim();
@@ -152,7 +149,7 @@ public class FeedbackService {
 
     @Transactional
     public void insertAllFeedback(List<FeedBackApiRes> feedBackApiListRes) {
-        feedBackApiListRes.stream().forEach(feedBackApiRes -> {
+        feedBackApiListRes.forEach(feedBackApiRes -> {
             Long qaId = feedBackApiRes.getQaId();
             Qa qa = qaRepository.findById(qaId).orElseThrow(() -> new CommonException(ExceptionCode.QA_NULL.getMessage(), ExceptionCode.QA_NULL.getCode()));
 
@@ -189,7 +186,7 @@ public class FeedbackService {
 
         // 키워드 가공
         for (String splitSummary : splitKeywordList) {
-            if (splitSummary.indexOf(".") != -1) {
+            if (splitSummary.contains(".")) {
                 String num = splitSummary.substring(0, splitSummary.indexOf("."));
                 if (org.apache.commons.lang3.StringUtils.isNumeric(num)) {
                     String content = splitSummary.substring(splitSummary.indexOf(".") + 1).trim();
@@ -207,7 +204,7 @@ public class FeedbackService {
         // 모법답안 가공
         String[] splitBestList = apiBestRst.split("\n");
         for (String splitSummary : splitBestList) {
-            if (splitSummary.indexOf(".") != -1) {
+            if (splitSummary.contains(".")) {
                 String num = splitSummary.substring(0, splitSummary.indexOf("."));
                 if (org.apache.commons.lang3.StringUtils.isNumeric(num)) {
                     String content = splitSummary.substring(splitSummary.indexOf(".") + 1).trim();
@@ -226,13 +223,13 @@ public class FeedbackService {
         }
 
         List<FeedBackApiRes> feedBackApiListRes = new ArrayList<>();
-        feedbackInsertListReq.stream().forEach(feedbackInsertReq -> {
+        feedbackInsertListReq.forEach(feedbackInsertReq -> {
 
             Long qaId = feedbackInsertReq.getQaId();
             Long apiNum = feedbackInsertReq.getApiNum();
 
-            feedbackList.stream().forEach(feedback -> {
-                if (apiNum == feedback.getQaId()) {
+            feedbackList.forEach(feedback -> {
+                if (Objects.equals(apiNum, feedback.getQaId())) {
                     FeedBackApiRes feedBackApiRes = new FeedBackApiRes();
                     feedBackApiRes.setQaId(qaId);
                     feedBackApiRes.setType(feedback.getType());

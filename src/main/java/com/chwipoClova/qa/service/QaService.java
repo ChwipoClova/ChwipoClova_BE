@@ -1,11 +1,11 @@
 package com.chwipoClova.qa.service;
 
+import com.chwipoClova.api.service.ApiService;
 import com.chwipoClova.common.enums.CommonCode;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.response.MessageCode;
-import com.chwipoClova.common.utils.ApiUtils;
 import com.chwipoClova.feedback.request.FeedbackInsertReq;
 import com.chwipoClova.feedback.service.FeedbackService;
 import com.chwipoClova.interview.entity.Interview;
@@ -30,10 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -52,12 +49,12 @@ public class QaService {
 
     private final UserRepository userRepository;
 
-    private final ApiUtils apiUtils;
+    private final ApiService apiService;
 
     @Transactional
     public List<QaQuestionInsertRes> insertQaQuestionList(List<QaQuestionInsertReq> qaQuestionInsertReqList) throws IOException {
         List<Qa> qaList = new ArrayList<>();
-        qaQuestionInsertReqList.stream().forEach(qaQuestionInsertReq -> {
+        qaQuestionInsertReqList.forEach(qaQuestionInsertReq -> {
             Qa qa = Qa.builder()
                     .question(qaQuestionInsertReq.getQuestion())
                     .aiAnswer(qaQuestionInsertReq.getAiAnswer())
@@ -69,7 +66,7 @@ public class QaService {
 
         List<QaQuestionInsertRes> qaQuestionInsertResList = new ArrayList<>();
 
-        qaListRst.stream().forEach(qa -> {
+        qaListRst.forEach(qa -> {
             QaQuestionInsertRes qaQuestionInsertRes = QaQuestionInsertRes.builder()
                     .qaId(qa.getQaId())
                     .question(qa.getQuestion())
@@ -85,7 +82,6 @@ public class QaService {
 
     @Transactional
     public CommonResponse insertAnswer(QaAnswerInsertReq qaAnswerInsertReq, Interview interview) throws IOException {
-        Long userId = qaAnswerInsertReq.getUserId();
         Long interviewId = qaAnswerInsertReq.getInterviewId();
 
         List<QaAnswerDataInsertReq> qaAnswerDataInsertReqList = qaAnswerInsertReq.getAnswerData();
@@ -100,7 +96,7 @@ public class QaService {
         AtomicBoolean lastCkAtomic = new AtomicBoolean(false);
 
         AtomicLong answerCnt = new AtomicLong();
-        qaAnswerDataInsertReqList.stream().forEach(qaAnswerDataInsertReq -> {
+        qaAnswerDataInsertReqList.forEach(qaAnswerDataInsertReq -> {
             String answer = qaAnswerDataInsertReq.getAnswer();
 
             // 답변 내용이 있을 경우 답변 저장 및 피드백 생성
@@ -111,7 +107,7 @@ public class QaService {
                         .build();
                 qa.edit(qaEditor);
 
-                if (lastQaId == qa.getQaId()) {
+                if (Objects.equals(lastQaId, qa.getQaId())) {
                     lastCkAtomic.set(true);
                 }
 
@@ -145,7 +141,7 @@ public class QaService {
             String allAnswerData = answerStringBuilder.toString().trim();
 
             // 면접관의 속마음
-            String apiFeelRst = apiUtils.feel(allAnswerData);
+            String apiFeelRst = apiService.feel(allAnswerData);
 
             feedbackService.insertFeedback(allQuestionData, allAnswerData, feedbackInsertListReq);
 
@@ -319,10 +315,10 @@ public class QaService {
         String recruitSummary = interviewRst.getRecruitSummary();
         String resumeSummary = interviewRst.getResumeSummary();
 
-        String apiQaRst = apiUtils.question(recruitSummary, resumeSummary);
+        String apiQaRst = apiService.question(recruitSummary, resumeSummary);
 
         List<QaQuestionInsertReq> qaQuestionInsertReqList = new ArrayList<>();
-        getApiQaList(apiQaRst).stream().forEach(apiQa ->  {
+        getApiQaList(apiQaRst).forEach(apiQa ->  {
             QaQuestionInsertReq qaQuestionInsertReq = new QaQuestionInsertReq();
             qaQuestionInsertReq.setInterview(interviewRst);
             qaQuestionInsertReq.setQuestion(apiQa);
@@ -337,7 +333,7 @@ public class QaService {
 
         List<String> apiQaList = new ArrayList<>();
         for (String splitSummary : splitSummaryList) {
-            if (splitSummary.indexOf(".") != -1) {
+            if (splitSummary.contains(".")) {
                 String num = splitSummary.substring(0, splitSummary.indexOf("."));
                 if (org.apache.commons.lang3.StringUtils.isNumeric(num)) {
                     apiQaList.add(splitSummary.trim());

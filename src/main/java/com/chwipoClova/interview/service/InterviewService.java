@@ -20,7 +20,6 @@ import com.chwipoClova.interview.response.InterviewRes;
 import com.chwipoClova.qa.entity.Qa;
 import com.chwipoClova.qa.request.QaAnswerInsertReq;
 import com.chwipoClova.qa.request.QaGenerateReq;
-import com.chwipoClova.qa.request.QaQuestionInsertReq;
 import com.chwipoClova.qa.response.QaCountRes;
 import com.chwipoClova.qa.response.QaListForFeedbackRes;
 import com.chwipoClova.qa.response.QaListRes;
@@ -30,7 +29,6 @@ import com.chwipoClova.recruit.request.RecruitInsertReq;
 import com.chwipoClova.recruit.response.RecruitInsertRes;
 import com.chwipoClova.recruit.service.RecruitService;
 import com.chwipoClova.resume.entity.Resume;
-import com.chwipoClova.resume.repository.ResumeRepository;
 import com.chwipoClova.resume.service.ResumeService;
 import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.repository.UserRepository;
@@ -39,7 +37,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -72,7 +69,7 @@ public class InterviewService {
     private Integer interviewLimitSize;
 
     @Transactional
-    public InterviewInsertRes insertInterview(InterviewInsertReq interviewInsertReq, MultipartFile file) throws IOException {
+    public InterviewInsertRes insertInterview(InterviewInsertReq interviewInsertReq, MultipartFile file) throws Exception {
         Long userId = interviewInsertReq.getUserId();
         Long resumeId = interviewInsertReq.getResumeId();
         String recruitContent = interviewInsertReq.getRecruitContent();

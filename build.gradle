@@ -32,6 +32,7 @@ dependencies {
 	// lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.projectlombok:lombok:1.18.22'
 
 	// DB
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
@@ -50,7 +51,6 @@ dependencies {
 	// security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	testImplementation 'org.springframework.security:spring-security-test'
-	testImplementation 'org.projectlombok:lombok:1.18.22'
 
 	// quertDsl
 	implementation 'com.querydsl:querydsl-core:5.0.0'
@@ -94,6 +94,13 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
 	implementation group: 'org.springframework.security', name: 'spring-security-oauth2-client', version: '6.2.0'
+
+	// google ocr
+	implementation(platform("com.google.cloud:libraries-bom:26.62.0"))
+	implementation("com.google.cloud:google-cloud-vision")
+
+	// google storage
+	implementation("com.google.cloud:google-cloud-storage")
 
 }
 
