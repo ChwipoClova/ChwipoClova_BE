@@ -65,6 +65,10 @@ public class Resume {
     @Schema(description = "수정일")
     private Date modifyDate;
 
+    @Column(name = "originText")
+    @Schema(description = "원문")
+    private String originText;
+
     // @PrePersist 메서드 정의 (최초 등록시 호출)
     @PrePersist
     public void prePersist() {

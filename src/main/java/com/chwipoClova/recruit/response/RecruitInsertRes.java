@@ -17,4 +17,7 @@ public class RecruitInsertRes {
     @Schema(description = "채용공고 요약", example = "삼성모집", name = "summary")
     private String summary;
 
+    @Schema(description = "채용공고 원문", example = "삼성모집", name = "originText")
+    private String originText;
+
 }

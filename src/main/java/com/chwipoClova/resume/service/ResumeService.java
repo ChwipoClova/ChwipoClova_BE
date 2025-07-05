@@ -68,46 +68,67 @@ public class ResumeService {
     private final PromptService promptService;
 
     @Transactional
-    public ResumeUploadRes uploadResume(Long userId, MultipartFile file) throws Exception {
+    public ResumeUploadRes uploadResume(Long userId, MultipartFile file, String fullText) throws Exception {
         User user = userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
 
-        String contentType = FileUtil.getOriginalFileExtension(file);
+/*        if (org.apache.commons.lang3.StringUtils.isBlank(fullText) && file == null) {
+            throw new CommonException(ExceptionCode.RESUME_NULL.getMessage(), ExceptionCode.RESUME_NULL.getCode());
+        }*/
 
-        if (org.apache.commons.lang3.StringUtils.isBlank(contentType) || contentType.toLowerCase().indexOf(uploadType) == -1) {
-            throw new CommonException(ExceptionCode.FILE_EXT_PDF.getMessage(), ExceptionCode.FILE_EXT_PDF.getCode());
+        String resumeTxt;
+        String fileName = "";
+        String filePath = "";
+        long fileSize = 0;
+        String originalName = "";
+        int apiBaseTokenLimit = promptService.getMaxToken("RS");
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(fullText)) {
+            resumeTxt = fullText;
+        } else {
+            String contentType = FileUtil.getOriginalFileExtension(file);
+            if (org.apache.commons.lang3.StringUtils.isBlank(contentType) || contentType.toLowerCase().indexOf(uploadType) == -1) {
+                throw new CommonException(ExceptionCode.FILE_EXT_PDF.getMessage(), ExceptionCode.FILE_EXT_PDF.getCode());
+            }
+            originalName = file.getOriginalFilename();
+            assert originalName != null;
+
+            // 기존 이력서 목록이 3건 이상이면 오류 발생
+            List<Resume> resumeList = findByUserUserIdAndDelFlagOrderByRegDate(user.getUserId());
+            if (resumeList != null && resumeList.size() >= resumeLimitSize) {
+                throw new CommonException(ExceptionCode.RESUME_LIST_OVER.getMessage(), ExceptionCode.RESUME_LIST_OVER.getCode());
+            }
+
+            String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+
+            // 날짜 폴더 생성
+            String folderPath = makeFolder();
+
+            // UUID
+            String uuid = UUID.randomUUID().toString();
+
+            long currentTimeMills = Timestamp.valueOf(LocalDateTime.now()).getTime();
+
+            filePath = uploadPath + File.separator + folderPath + File.separator;
+            fileName = uuid + "_" + currentTimeMills + "." +extension;
+            fileSize = file.getSize();
+
+            if (fileSize > uploadMaxSize) {
+                throw new CommonException(ExceptionCode.FILE_SIZE.getMessage(), ExceptionCode.FILE_SIZE.getCode());
+            }
+
+            // 저장할 파일 이름 중간에 "_"를 이용해서 구현
+            String saveName = filePath + fileName;
+            Path savePath = Paths.get(saveName);
+            file.transferTo(savePath);
+
+            // 이력서 OCR
+            resumeTxt = apiService.ocr(savePath.toFile());
         }
 
-        String originalName = file.getOriginalFilename();
-        assert originalName != null;
+        // 이력서 OCR 성공 이후 토큰 계산 하여 체크
+        apiService.countTokenLimitCk(resumeTxt, apiBaseTokenLimit);
 
-        // 기존 이력서 목록이 3건 이상이면 오류 발생
-        List<Resume> resumeList = findByUserUserIdAndDelFlagOrderByRegDate(user.getUserId());
-        if (resumeList != null && resumeList.size() >= resumeLimitSize) {
-            throw new CommonException(ExceptionCode.RESUME_LIST_OVER.getMessage(), ExceptionCode.RESUME_LIST_OVER.getCode());
-        }
-
-        String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-
-        // 날짜 폴더 생성
-        String folderPath = makeFolder();
-
-        // UUID
-        String uuid = UUID.randomUUID().toString();
-
-        long currentTimeMills = Timestamp.valueOf(LocalDateTime.now()).getTime();
-
-        String filePath = uploadPath + File.separator + folderPath + File.separator;
-        String fileName = uuid + "_" + currentTimeMills + "." +extension;
-        Long fileSize = file.getSize();
-
-        if (fileSize > uploadMaxSize) {
-            throw new CommonException(ExceptionCode.FILE_SIZE.getMessage(), ExceptionCode.FILE_SIZE.getCode());
-        }
-
-        // 저장할 파일 이름 중간에 "_"를 이용해서 구현
-        String saveName = filePath + fileName;
-        Path savePath = Paths.get(saveName);
-        file.transferTo(savePath);
+        // 이력서 요약
+        String summary = apiService.summaryResume(resumeTxt);
 
 /*        File pdfFile = new File(saveName);
         PDDocument document = Loader.loadPDF(pdfFile);
@@ -118,17 +139,6 @@ public class ResumeService {
             throw new CommonException(ExceptionCode.FILE_PDF_PAGE_OVER.getMessage(), ExceptionCode.FILE_PDF_PAGE_OVER.getCode());
         }*/
 
-        int apiBaseTokenLimit = promptService.getMaxToken("RS");
-
-        // 이력서 OCR
-        String resumeTxt = apiService.ocr(savePath.toFile());
-
-        // 이력서 OCR 성공 이후 토큰 계산 하여 체크
-        apiService.countTokenLimitCk(resumeTxt, apiBaseTokenLimit);
-
-        // 이력서 요약
-        String summary = apiService.summaryResume(resumeTxt);
-
         // 파일업로드 성공 후 DB 저장
         Resume resume = Resume.builder()
                 .fileName(fileName)
@@ -136,6 +146,7 @@ public class ResumeService {
                 .fileSize(fileSize)
                 .originalFileName(originalName)
                 .summary(summary)
+                .originText(resumeTxt)
                 .user(user)
                 .build();
 
@@ -249,6 +260,4 @@ public class ResumeService {
 
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
-
-
 }

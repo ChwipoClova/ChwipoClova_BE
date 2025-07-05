@@ -109,6 +109,7 @@ public class RecruitService {
             recruit = Recruit.builder()
                     .title(title)
                     .content(recruitContent)
+                    .originText(recruitContent)
                     .summary(summary)
                     .user(user)
                     .build();
@@ -165,6 +166,7 @@ public class RecruitService {
                     .fileSize(fileSize)
                     .originalFileName(originalName)
                     .user(user)
+                    .originText(resumeTxt)
                     .summary(summary)
                     .build();
 
@@ -183,6 +185,7 @@ public class RecruitService {
                 .recruitId(recruitRst.getRecruitId())
                 .title(recruitRst.getTitle())
                 .summary(recruitRst.getSummary())
+                .originText(recruitRst.getOriginText())
                 .build();
     }
 

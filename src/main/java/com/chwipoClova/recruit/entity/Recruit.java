@@ -1,6 +1,5 @@
 package com.chwipoClova.recruit.entity;
 
-import com.chwipoClova.resume.entity.ResumeEditor;
 import com.chwipoClova.user.entity.User;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -73,6 +72,10 @@ public class Recruit {
     @Column(name = "modifyDate")
     @Schema(description = "수정일")
     private Date modifyDate;
+
+    @Column(name = "originText")
+    @Schema(description = "원문")
+    private String originText;
 
     @PrePersist
     public void prePersist() {

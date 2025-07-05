@@ -90,8 +90,11 @@ public class InterviewService {
         RecruitInsertRes recruitInsertRes = recruitService.insertRecruit(recruitInsertReq);
 
         String title = recruitInsertRes.getTitle();
-        String recruitSummary = recruitInsertRes.getSummary();
-        String resumeSummary = resume.getSummary();
+        //String recruitSummary = recruitInsertRes.getSummary();
+        //String resumeSummary = resume.getSummary();
+
+        String recruitSummary = recruitInsertRes.getOriginText();
+        String resumeSummary = resume.getOriginText();
 
         // 면접 저장
         Interview interview = Interview.builder()
