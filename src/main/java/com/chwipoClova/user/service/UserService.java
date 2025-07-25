@@ -74,7 +74,7 @@ public class UserService {
 
     public UserSnsUrlRes getKakaoUrl() {
         String kakaoUrl = kakaoAuthUrl + "?response_type=code" + "&client_id=" + clientId
-                + "&redirect_uri=" + redirectUri;
+                + "&redirect_uri=" + redirectLocalUri;
         return UserSnsUrlRes.builder()
                 .url(kakaoUrl)
                 .build();
