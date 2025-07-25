@@ -2,7 +2,7 @@ package com.chwipoClova.oauth2.handler;
 
 import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.response.MessageCode;
-import com.chwipoClova.common.utils.JwtUtil;
+import com.chwipoClova.common.service.JwtCookieServiceImpl;
 import com.chwipoClova.oauth2.dto.OAuth2UserInfoRecord;
 import com.chwipoClova.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +29,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     @Value("${home.error}")
     private String error;
 
-    private final JwtUtil jwtUtil;
+    private final JwtCookieServiceImpl jwtCookieService;
 
     private final UserService userService;
 
@@ -71,6 +71,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     protected void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
         super.clearAuthenticationAttributes(request);
-        jwtUtil.deleteAllToken(request, response);
+        jwtCookieService.deleteAllToken(request, response);
     }
 }

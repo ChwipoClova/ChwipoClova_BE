@@ -1,6 +1,6 @@
 package com.chwipoClova.oauth2.handler;
 
-import com.chwipoClova.common.utils.JwtUtil;
+import com.chwipoClova.common.service.JwtCookieServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +21,12 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
     @Value("${home.error}")
     private String error;
 
-    private final JwtUtil jwtUtil;
+    private final JwtCookieServiceImpl jwtCookieService;
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException {
-        jwtUtil.deleteAllToken(request, response);
+        jwtCookieService.deleteAllToken(request, response);
         getRedirectStrategy().sendRedirect(request, response, homeUrl+error);
     }
 }

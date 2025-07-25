@@ -1,14 +1,10 @@
 package com.chwipoClova.token.service;
 
-import com.chwipoClova.common.utils.JwtUtil;
-import com.chwipoClova.token.dto.TokenDto;
+import com.chwipoClova.common.service.JwtCookieServiceImpl;
 import com.chwipoClova.token.entity.Token;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +26,7 @@ public class TokenService {
 /*        HashOperations<String, String, Token> hashOps = redisTemplate.opsForHash();
         hashOps.put(HASH_KEY, token.getUserId(), token);*/
 
-        redisTemplate.expire(HASH_KEY + ":" + token.getRefreshToken(), JwtUtil.REFRESH_COOKIE_TIME, TimeUnit.SECONDS);
+        redisTemplate.expire(HASH_KEY + ":" + token.getRefreshToken(), JwtCookieServiceImpl.REFRESH_COOKIE_TIME, TimeUnit.SECONDS);
     }
 
     public Token findById(String token) {

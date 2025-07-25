@@ -3,7 +3,7 @@ package com.chwipoClova.common.filter;
 import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.service.LogService;
-import com.chwipoClova.common.utils.JwtUtil;
+import com.chwipoClova.common.service.JwtCookieServiceImpl;
 import com.chwipoClova.token.entity.Token;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -25,7 +25,7 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil;
+    private final JwtCookieServiceImpl jwtCookieService;
 
     //private String TOKEN_PREFIX = "Bearer ";
 
@@ -42,17 +42,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // 로그인 로그아웃은 제외
         String url = request.getRequestURI();
 
-        if (!Arrays.stream(authorizeUrl).anyMatch(url::equals)) {
+        if (Arrays.stream(authorizeUrl).noneMatch(url::equals)) {
             // Access / Refresh 헤더와 쿠키에서 토큰을 가져옴.
-            String accessToken = jwtUtil.getCookieToken(request, JwtUtil.ACCESS);
-            String refreshToken = jwtUtil.getCookieToken(request, JwtUtil.REFRESH);
+            String accessToken = jwtCookieService.getToken(request, JwtCookieServiceImpl.ACCESS);
+            String refreshToken = jwtCookieService.getToken(request, JwtCookieServiceImpl.REFRESH);
 
             String loginId;
-            if(accessToken != null && jwtUtil.tokenValidation(accessToken)) {
-                loginId = jwtUtil.getIdFromToken(accessToken);
+            if(accessToken != null && jwtCookieService.tokenValidation(accessToken)) {
+                loginId = jwtCookieService.getIdFromToken(accessToken);
             } else if (refreshToken != null) { // 어세스 토큰이 만료된 상황 && 리프레시 토큰 또한 존재하는 상황
                 // 리프레시 토큰 검증 && 리프레시 토큰 DB에서  토큰 존재유무 확인
-                Token isRefreshToken = jwtUtil.selectRefreshToken(refreshToken);
+                Token isRefreshToken = jwtCookieService.selectRefreshToken(refreshToken);
                 // 리프레시 토큰이 유효하고 리프레시 토큰이 DB와 비교했을때 똑같다면
                 if (isRefreshToken != null) {
                     // 리프레시 토큰으로 아이디 정보 가져오기
@@ -69,8 +69,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 return;
             }
             // 새로운 어세스 토큰 발급
-            String newAccessToken = jwtUtil.createToken(loginId, JwtUtil.ACCESS);
-            jwtUtil.setCookieToken(response, newAccessToken, JwtUtil.ACCESS, loginId);
+            String newAccessToken = jwtCookieService.createToken(loginId, JwtCookieServiceImpl.ACCESS);
+            jwtCookieService.setToken(response, newAccessToken, JwtCookieServiceImpl.ACCESS);
             setAuthentication(loginId);
         }
         filterChain.doFilter(request,response);
@@ -81,7 +81,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             if (StringUtils.isNotBlank(subject)) {
                 Long id = Long.parseLong(subject);
-                Authentication authentication = jwtUtil.createAuthentication(id);
+                Authentication authentication = jwtCookieService.createAuthentication(id);
                 // security가 만들어주는 securityContextHolder 그 안에 authentication을 넣어줍니다.
                 // security가 securitycontextholder에서 인증 객체를 확인하는데
                 // jwtAuthfilter에서 authentication을 넣어주면 UsernamePasswordAuthenticationFilter 내부에서 인증이 된 것을 확인하고 추가적인 작업을 진행하지 않습니다.

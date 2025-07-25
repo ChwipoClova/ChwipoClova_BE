@@ -55,6 +55,9 @@ public class ResumeService {
     @Value("${limit.size.resume}")
     private Integer resumeLimitSize;
 
+    @Value("${limit.text.resume}")
+    private Integer resumeLimitTextSize;
+
     private final ResumeRepository resumeRepository;
 
     private final UserRepository userRepository;
@@ -71,9 +74,9 @@ public class ResumeService {
     public ResumeUploadRes uploadResume(Long userId, MultipartFile file, String fullText) throws Exception {
         User user = userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
 
-/*        if (org.apache.commons.lang3.StringUtils.isBlank(fullText) && file == null) {
+        if (org.apache.commons.lang3.StringUtils.isBlank(fullText) && file == null) {
             throw new CommonException(ExceptionCode.RESUME_NULL.getMessage(), ExceptionCode.RESUME_NULL.getCode());
-        }*/
+        }
 
         String resumeTxt;
         String fileName = "";
@@ -82,10 +85,13 @@ public class ResumeService {
         String originalName = "";
         int apiBaseTokenLimit = promptService.getMaxToken("RS");
         if (org.apache.commons.lang3.StringUtils.isNotBlank(fullText)) {
+            if (fullText.length() > resumeLimitTextSize) {
+                throw new CommonException(ExceptionCode.RESUME_TOKEN_OVER.getMessage(), ExceptionCode.RESUME_TOKEN_OVER.getCode());
+            }
             resumeTxt = fullText;
         } else {
             String contentType = FileUtil.getOriginalFileExtension(file);
-            if (org.apache.commons.lang3.StringUtils.isBlank(contentType) || contentType.toLowerCase().indexOf(uploadType) == -1) {
+            if (org.apache.commons.lang3.StringUtils.isBlank(contentType) || !contentType.toLowerCase().contains(uploadType)) {
                 throw new CommonException(ExceptionCode.FILE_EXT_PDF.getMessage(), ExceptionCode.FILE_EXT_PDF.getCode());
             }
             originalName = file.getOriginalFilename();
@@ -194,11 +200,12 @@ public class ResumeService {
 
         List<Resume> resumeList = findByUserUserIdAndDelFlagOrderByRegDate(user.getUserId());
 
-        resumeList.stream().forEach(resume -> {
+        resumeList.forEach(resume -> {
             ResumeListRes resumeListRes = ResumeListRes.builder()
                     .resumeId(resume.getResumeId())
                     .fileName(resume.getOriginalFileName())
                     .regDate(resume.getRegDate())
+                    .content(resume.getOriginText())
                     .build();
             resumeListResList.add(resumeListRes);
         });
