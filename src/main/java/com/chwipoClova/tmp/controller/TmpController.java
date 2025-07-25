@@ -18,7 +18,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Tmp", description = "Tmp API")
 public class TmpController {
-
     private final TmpService tmpService;
 
     @Operation(summary = "Tmp 목록 조회 (기본 테스트)", description = "Tmp 목록 조회 (기본 테스트)")
