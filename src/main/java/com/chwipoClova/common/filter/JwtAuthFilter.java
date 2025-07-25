@@ -1,7 +1,6 @@
 package com.chwipoClova.common.filter;
 
 import com.chwipoClova.common.exception.ExceptionCode;
-import com.chwipoClova.common.repository.LogRepository;
 import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.service.LogService;
 import com.chwipoClova.common.utils.JwtUtil;
@@ -14,12 +13,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,7 +20,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Properties;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -35,7 +27,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
-    private String TOKEN_PREFIX = "Bearer ";
+    //private String TOKEN_PREFIX = "Bearer ";
 
     private final String[] authorizeUrl;
 
