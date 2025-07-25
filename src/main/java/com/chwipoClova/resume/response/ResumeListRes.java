@@ -1,7 +1,6 @@
 package com.chwipoClova.resume.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
 import lombok.Builder;
 import lombok.Data;
 
@@ -19,4 +18,7 @@ public class ResumeListRes {
 
     @Schema(description = "등록일", example = "2023-12-09T10:13:17.838+00:00", name = "regDate")
     private Date regDate;
+
+    @Schema(description = "이력서 내용", example = "이력서 내용", name = "content")
+    private String content;
 }

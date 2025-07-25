@@ -35,7 +35,7 @@ public enum ExceptionCode {
 
     RESUME_LIST_OVER("861", "이력서 최대 개수를 초과하였습니다."),
 
-    RESUME_TOKEN_OVER("862", "이력서의 글자 수를 5,000자 이하로 줄여주세요"),
+    RESUME_TOKEN_OVER("862", "이력서의 글자 수를 3,000자 이하로 줄여주세요"),
 
     RECRUIT_CONTENT_NULL("870", "채용공고 정보가 올바르지 않습니다."),
 

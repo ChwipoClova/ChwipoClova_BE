@@ -73,15 +73,13 @@ public class JwtUtil {
 
     // header 토큰을 가져오는 기능
     public String getHeaderToken(HttpServletRequest request, String type) {
-
-        //String tokenName = type.equals("Access") ? ACCESS_TOKEN : REFRESH_TOKEN;
-        String authorization = request.getHeader(AUTHORIZATION);
-
+       /*String authorization = request.getHeader(AUTHORIZATION);
         if (authorization != null && authorization.startsWith(BEARER)) {
             return authorization.substring(7);
         } else {
             return null;
-        }
+        }*/
+        return request.getHeader(type);
     }
 
     // 토큰 생성
@@ -128,18 +126,16 @@ public class JwtUtil {
     // db에 저장한다는 것이 jwt token을 사용한다는 강점을 상쇄시킨다.
     // db 보다는 redis를 사용하는 것이 더욱 좋다. (in-memory db기 때문에 조회속도가 빠르고 주기적으로 삭제하는 기능이 기본적으로 존재합니다.)
     public Token selectRefreshToken(String token) {
-
         // 1차 토큰 검증
-        if(!tokenValidation(token)) return null;
-
+        if(Boolean.FALSE.equals(tokenValidation(token))) return null;
         //String idFromToken = getIdFromToken(token);
         //Long userId = Long.parseLong(idFromToken);
         // DB에 저장한 토큰 비교
 
-        Token refreshToken = tokenService.findById(token);
+        //Token refreshToken = tokenService.findById(token);
 
         // return refreshToken != null && token.equals(refreshToken.getRefreshToken());
-        return refreshToken;
+        return tokenService.findById(token);
     }
 
     // 인증 객체 생성
@@ -155,13 +151,8 @@ public class JwtUtil {
     }
 
     // 어세스 토큰 헤더 설정
-    public void setHeaderAccessToken(HttpServletResponse response, String accessToken) {
-        response.setHeader(ACCESS_TOKEN, accessToken);
-    }
-
-    // 리프레시 토큰 헤더 설정
-    public void setHeaderRefreshToken(HttpServletResponse response, String refreshToken) {
-        response.setHeader(REFRESH_TOKEN, refreshToken);
+    public void setHeaderToken(HttpServletResponse response, String token, String type) {
+        response.setHeader(type, token);
     }
 
     public void setCookieToken(HttpServletResponse response, String token, String type, String userId) {
@@ -215,8 +206,8 @@ public class JwtUtil {
         return cookieToken.get();
     }
 
-    public void setDeleteHeaderAccessToken(HttpServletResponse response) {
-        setHeaderAccessToken(response, "");
+    public void setDeleteHeaderToken(HttpServletResponse response, String type) {
+        setHeaderToken(response, "", type);
     }
 
     public void deleteAllToken(HttpServletRequest request, HttpServletResponse response) {
@@ -229,6 +220,15 @@ public class JwtUtil {
         tokenService.deleteById(refreshToken);
     }
 
+    public void deleteAllTokenByHeader(HttpServletRequest request, HttpServletResponse response) {
+        setDeleteHeaderToken(response, ACCESS_TOKEN);
+        setDeleteHeaderToken(response, REFRESH_TOKEN);
+
+        // redis refreshToken 삭제
+        String refreshToken = getHeaderToken(request, REFRESH_TOKEN);
+        tokenService.deleteById(refreshToken);
+    }
+
     public void setResonseJwtToken(HttpServletResponse response, TokenDto tokenDto) {
         String userId = tokenDto.getUserId();
         String accessToken = tokenDto.getAccessToken();
@@ -237,6 +237,19 @@ public class JwtUtil {
         //setHeaderAccessToken(response, accessToken);
         setCookieToken(response, accessToken, JwtUtil.ACCESS, userId);
         setCookieToken(response, refreshToken, JwtUtil.REFRESH, userId);
+
+        // redis refreshToken 저장
+        Token newToken = new Token(refreshToken,  userId);
+        tokenService.save(newToken);
+    }
+
+    public void setResonseJwtTokenByHeader(HttpServletResponse response, TokenDto tokenDto) {
+        String userId = tokenDto.getUserId();
+        String accessToken = tokenDto.getAccessToken();
+        String refreshToken = tokenDto.getRefreshToken();
+
+        setHeaderToken(response, accessToken, ACCESS_TOKEN);
+        setHeaderToken(response, accessToken, REFRESH_TOKEN);
 
         // redis refreshToken 저장
         Token newToken = new Token(refreshToken,  userId);
