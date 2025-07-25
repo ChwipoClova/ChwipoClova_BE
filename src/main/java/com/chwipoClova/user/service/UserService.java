@@ -213,15 +213,14 @@ public class UserService {
     }
 
     public KakaoToken requestAccessToken(String code) {
-
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();;
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", grantType);
         body.add("client_id", clientId);
         body.add("client_secret", clientSecret);
-        body.add("redirect_uri", redirectUri);
+        body.add("redirect_uri", redirectLocalUri);
         body.add("code", code);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, httpHeaders);
