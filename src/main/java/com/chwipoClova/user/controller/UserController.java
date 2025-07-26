@@ -44,6 +44,7 @@ public class UserController {
         return userService.selectUserInfoForUserId(userId);
     }
 
+    @Hidden
     @Operation(summary = "카카오 로그인 URL", description = "카카오 로그인 URL")
     @GetMapping("/getKakaoUrl")
     @ApiResponses(value = {
@@ -54,15 +55,27 @@ public class UserController {
         return userService.getKakaoUrl();
     }
 
-    @Operation(summary = "카카오 로그인", description = "카카오 로그인 (카카오 로그인 URL 호출해서 로그인 성공하면 나오는 코드를 입력)")
+    @Hidden
+    @Operation(summary = "카카오 로그인 코드", description = "카카오 로그인 (카카오 로그인 URL 호출해서 로그인 성공하면 나오는 코드를 입력)")
+    @GetMapping("/kakaoLoginCode")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = UserLoginRes.class))),
+            @ApiResponse(responseCode = "700", description = "신규 가입되었습니다.", content = @Content(schema = @Schema(implementation = String.class)))
+    }
+    )
+    public CommonResponse kakaoLoginCode(@Schema(description = "로그인코드", example = "1", name = "code") @RequestParam(name = "code") String code, HttpServletResponse response) {
+        return userService.kakaoLoginCode(code, response);
+    }
+
+    @Operation(summary = "카카오 로그인", description = "카카오 로그인")
     @GetMapping("/kakaoLogin")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = UserLoginRes.class))),
             @ApiResponse(responseCode = "700", description = "신규 가입되었습니다.", content = @Content(schema = @Schema(implementation = String.class)))
     }
     )
-    public CommonResponse kakaoLogin(@Schema(description = "로그인코드", example = "1", name = "code") @RequestParam(name = "code") String code, HttpServletResponse response) {
-        return userService.kakaoLogin(code, response);
+    public CommonResponse kakaoLogin(@Schema(description = "토큰", example = "1", name = "token") @RequestParam(name = "token") String token, HttpServletResponse response) {
+        return userService.kakaoLogin(token, response);
     }
 
     @Hidden
@@ -82,7 +95,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = String.class)))
     }
     )
-    public CommonResponse logout(@RequestBody UserLogoutReq userLogoutReq,
+    public CommonResponse<?> logout(@RequestBody UserLogoutReq userLogoutReq,
                                  @Parameter(hidden = true) HttpServletRequest request,
                                  @Parameter(hidden = true) HttpServletResponse response
     ) {

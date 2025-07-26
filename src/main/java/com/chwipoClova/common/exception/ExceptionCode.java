@@ -55,6 +55,8 @@ public enum ExceptionCode {
 
     TOKEN_NULL("950", "로그아웃 되었습니다."),
 
+    INVALID_TOKEN("951", "유효하지 않은 토큰입니다."),
+
     API_NULL("980", "API 결과 NULL"),
 
     API_JSON_MAPPING_FAIL("981", "API JSON 매핑에 실패했습니다."),

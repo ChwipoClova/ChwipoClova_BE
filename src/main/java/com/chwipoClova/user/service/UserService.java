@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -81,7 +82,7 @@ public class UserService {
     }
 
     @Transactional
-    public CommonResponse kakaoLogin(String code, HttpServletResponse response) {
+    public CommonResponse kakaoLoginCode(String code, HttpServletResponse response) {
         KakaoToken kakaoToken = requestAccessToken(code);
         KakaoUserInfo kakaoUserInfo = requestOauthInfo(kakaoToken);
         return login(kakaoUserInfo, response);
@@ -271,5 +272,14 @@ public class UserService {
                 .regDate(user.getRegDate())
                 .modifyDate(user.getModifyDate())
                 .build();
+    }
+
+    public CommonResponse<?> kakaoLogin(String token, HttpServletResponse response) {
+        if (StringUtils.isBlank(token)) {
+            throw new CommonException(ExceptionCode.TOKEN_NULL.getMessage(), ExceptionCode.TOKEN_NULL.getCode());
+        } else {
+            KakaoUserInfo kakaoUserInfo = requestOauthInfo(KakaoToken.builder().accessToken(token).build());
+            return login(kakaoUserInfo, response);
+        }
     }
 }

@@ -2,8 +2,7 @@ package com.chwipoClova.common.config;
 
 import com.chwipoClova.common.filter.JwtAuthFilter;
 import com.chwipoClova.common.service.JwtAuthenticationEntryPoint;
-import com.chwipoClova.common.service.LogService;
-import com.chwipoClova.common.service.JwtCookieServiceImpl;
+import com.chwipoClova.common.service.JwtProviderService;
 import com.chwipoClova.oauth2.handler.OAuth2AuthenticationFailureHandler;
 import com.chwipoClova.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 import com.chwipoClova.oauth2.service.OAuth2UserService;
@@ -29,16 +28,13 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfig {
-
-    private final JwtCookieServiceImpl jwtCookieService;
+    private final JwtProviderService jwtProviderService;
 
     @Value("${web.ignoring.url}")
     private String[] ignoringUrl;
 
     @Value("${web.authorize.url}")
     private String[] authorizeUrl;
-
-    private final LogService logService;
 
     private final OAuth2UserService oAuth2UserService;
 
@@ -74,7 +70,7 @@ public class WebSecurityConfig {
                                 configure.userInfoEndpoint(config -> config.userService(oAuth2UserService))
                                         .successHandler(oAuth2AuthenticationSuccessHandler)
                                         .failureHandler(oAuth2AuthenticationFailureHandler))
-                .addFilterBefore(new JwtAuthFilter(jwtCookieService, authorizeUrl, logService), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthFilter(jwtProviderService, authorizeUrl), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
         ;
         return http.build();
