@@ -32,26 +32,6 @@ public class JwtCookieServiceImpl implements JwtProviderService {
     private final UserDetailsServiceImpl userDetailsService;
     private final TokenService tokenService;
 
-    private static final long ACCESS_TIME = 2 * 60 * 60 * 1000L;
-
-    private static final long REFRESH_TIME = 14 * 24 * 60 * 60 * 1000L;
-
-    private static final int ACCESS_COOKIE_TIME = 2 * 60 * 60;
-
-    public static final int REFRESH_COOKIE_TIME = 14 * 24 * 60 * 60;
-
-    public static final String ACCESS_TOKEN = "accessToken";
-
-    public static final String REFRESH_TOKEN = "refreshToken";
-
-    public static final String AUTHORIZATION = "Authorization";
-
-    public static final String ACCESS = "Access";
-
-    public static final String REFRESH = "Refresh";
-
-    public static final String BEARER = "Bearer ";
-
     @Value("${cors.domain}")
     private String domain;
 

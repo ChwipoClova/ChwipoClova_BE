@@ -31,14 +31,6 @@ public class JwtHeaderServiceImpl implements JwtProviderService {
     private final UserDetailsServiceImpl userDetailsService;
     private final TokenService tokenService;
 
-    private static final long ACCESS_TIME = 2 * 60 * 60 * 1000L;
-
-    private static final long REFRESH_TIME = 14 * 24 * 60 * 60 * 1000L;
-
-    public static final String ACCESS_TOKEN = "accessToken";
-
-    public static final String REFRESH_TOKEN = "refreshToken";
-
     @Value("${cors.domain}")
     private String domain;
 

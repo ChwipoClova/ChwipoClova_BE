@@ -7,6 +7,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 
 public interface JwtProviderService {
+    long ACCESS_TIME = 2 * 60 * 60 * 1000L;
+    long REFRESH_TIME = 14 * 24 * 60 * 60 * 1000L;
+    int ACCESS_COOKIE_TIME = 2 * 60 * 60;
+    int REFRESH_COOKIE_TIME = 14 * 24 * 60 * 60;
+    String ACCESS_TOKEN = "accessToken";
+    String REFRESH_TOKEN = "refreshToken";
+    String AUTHORIZATION = "Authorization";
+    String ACCESS = "Access";
+    String REFRESH = "Refresh";
+
     String getToken(HttpServletRequest request, String type);
     TokenDto createAllToken(String userId);
     String createToken(String id, String type);
