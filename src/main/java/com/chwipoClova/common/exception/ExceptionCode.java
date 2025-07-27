@@ -55,7 +55,7 @@ public enum ExceptionCode {
 
     FEEDBACK_NOT_NULL("891", "피드백 데이터가 있습니다."),
 
-    TOKEN_NULL("950", "로그아웃 되었습니다."),
+    TOKEN_NULL("401", "권한이 없습니다."),
 
     INVALID_TOKEN("951", "유효하지 않은 토큰입니다."),
 
