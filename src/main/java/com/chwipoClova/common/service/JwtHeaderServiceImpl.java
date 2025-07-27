@@ -31,9 +31,6 @@ public class JwtHeaderServiceImpl implements JwtProviderService {
     private final UserDetailsServiceImpl userDetailsService;
     private final TokenService tokenService;
 
-    @Value("${cors.domain}")
-    private String domain;
-
     @Value("${jwt.secretKey}")
     private String secretKey;
 
@@ -50,7 +47,12 @@ public class JwtHeaderServiceImpl implements JwtProviderService {
 
     // header 토큰을 가져오는 기능
     public String getToken(HttpServletRequest request, String type) {
-        return request.getHeader(type);
+        String token = request.getHeader(type);
+
+        if (token != null && token.startsWith(JwtProviderService.BEARER)) {
+            return token.substring(JwtProviderService.BEARER.length()); // "Bearer "를 제외한 토큰 부분 추출
+        }
+        return null;
     }
 
     // 토큰 생성

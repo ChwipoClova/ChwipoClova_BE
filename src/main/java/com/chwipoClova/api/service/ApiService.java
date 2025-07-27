@@ -30,4 +30,5 @@ public interface ApiService {
 
     ApiRes callApiForJson(URI apiUrl, String reqData, HttpEntity<?> entity);
 
+    String summaryRecruitUrl(String url);
 }

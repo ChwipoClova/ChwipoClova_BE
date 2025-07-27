@@ -16,6 +16,7 @@ public interface JwtProviderService {
     String AUTHORIZATION = "Authorization";
     String ACCESS = "Access";
     String REFRESH = "Refresh";
+    String BEARER = "Bearer ";
 
     String getToken(HttpServletRequest request, String type);
     TokenDto createAllToken(String userId);

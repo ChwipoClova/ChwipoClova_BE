@@ -11,9 +11,13 @@ import com.chwipoClova.recruit.entity.Recruit;
 import com.chwipoClova.recruit.entity.RecruitEditor;
 import com.chwipoClova.recruit.repository.RecruitRepository;
 import com.chwipoClova.recruit.request.RecruitInsertReq;
+import com.chwipoClova.recruit.request.RecruitUrlReq;
 import com.chwipoClova.recruit.response.RecruitInsertRes;
+import com.chwipoClova.recruit.response.RecruitUrlApiRes;
+import com.chwipoClova.recruit.response.RecruitUrlRes;
 import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -273,4 +277,24 @@ public class RecruitService {
         }
     }
 
+    public List<RecruitUrlRes> getRecruitUrl(RecruitUrlReq recruitUrlReq) {
+        String url = recruitUrlReq.getUrl();
+        if (org.apache.commons.lang3.StringUtils.isBlank(url)) {
+            throw new CommonException(ExceptionCode.RECRUIT_URL_NULL.getMessage(), ExceptionCode.RECRUIT_URL_NULL.getCode());
+        }
+
+        // 채용공고 URL 요약
+        String summary = apiService.summaryRecruitUrl(url);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            RecruitUrlApiRes apiRes = mapper.readValue(summary, RecruitUrlApiRes.class);
+            if (!apiRes.isSuccess()) {
+                throw new CommonException(apiRes.getMessage(), ExceptionCode.API_NOT_OK.getCode());
+            }
+            return apiRes.getData();
+        } catch (Exception e) {
+            log.error("Error parsing JSON: {}", e.getMessage());
+            throw new CommonException("채용공고 URL 파싱 오류: " + e.getMessage(), ExceptionCode.SERVER_ERROR.getCode());
+        }
+    }
 }

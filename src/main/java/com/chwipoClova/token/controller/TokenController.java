@@ -22,7 +22,7 @@ public class TokenController {
     @PostMapping("/refresh")
     public CommonResponse<?> refreshToken(
             @RequestBody TokenReq tokenReq,
-            @RequestHeader(JwtProviderService.REFRESH_TOKEN) String refreshToken,
+            @RequestHeader(JwtProviderService.AUTHORIZATION) String refreshToken,
         @Parameter(hidden = true) HttpServletResponse response
     ) {
         return tokenUserService.refreshToken(refreshToken, tokenReq, response);

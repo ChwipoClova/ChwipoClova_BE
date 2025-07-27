@@ -13,27 +13,20 @@ import org.springframework.context.annotation.Configuration;
 public class SwaggerConfig {
     @Bean
     public OpenAPI openAPI() {
-        String key = JwtProviderService.ACCESS_TOKEN;
-        String refreshKey = JwtProviderService.REFRESH_TOKEN;
+        String key = JwtProviderService.AUTHORIZATION;
 
         return new OpenAPI()
                 .addSecurityItem(new SecurityRequirement()
                         .addList(key)
-                        .addList(refreshKey)
                 )
                 .info(apiInfo())
                 .components(new Components()
                         .addSecuritySchemes(key, new SecurityScheme()
                                 .name(key)
+                                .scheme(JwtProviderService.BEARER)
                                 .type(SecurityScheme.Type.APIKEY)
                                 .in(SecurityScheme.In.HEADER)
                                 .bearerFormat("JWT"))
-                        .addSecuritySchemes(refreshKey, new SecurityScheme()
-                                .name(refreshKey)
-                                .type(SecurityScheme.Type.APIKEY)
-                                .bearerFormat("JWT")
-                                .in(SecurityScheme.In.HEADER))
-
                 );
     }
 

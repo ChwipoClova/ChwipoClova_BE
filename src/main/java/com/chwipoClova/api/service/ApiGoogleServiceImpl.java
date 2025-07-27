@@ -121,8 +121,10 @@ public class ApiGoogleServiceImpl implements ApiService {
         if (deepSeekRes.getStatus() != HttpStatus.OK.value()) {
             throw new CommonException(ExceptionCode.API_NULL.getMessage(), ExceptionCode.API_NULL.getCode());
         }
-
-        return deepSeekRes.getResult();
+        if (deepSeekRes.getResult() == null || deepSeekRes.getResult().isBlank()) {
+            throw new CommonException(ExceptionCode.API_RESUME_FAIL.getMessage(), ExceptionCode.API_RESUME_FAIL.getCode());
+        }
+        return deepSeekRes.getResult().replaceAll("(?m)^```json\\s*", "").replaceAll("(?m)^```\\s*", "").trim();
     }
 
     public String ocr(File file) throws Exception {
@@ -347,6 +349,15 @@ public class ApiGoogleServiceImpl implements ApiService {
 
     public ApiRes callApiForJson(URI apiUrl, String reqData, HttpEntity<?> entity) {
         return josnConvertToVo(callApi(apiUrl, reqData, entity));
+    }
+
+    @Override
+    public String summaryRecruitUrl(String url) {
+        PromptRes promptRes = promptService.getPrompt("RU");
+        String prompt = promptRes.getPrompt();
+        prompt = prompt.replace("${여기에 스크래핑된 웹페이지 텍스트 삽입}$", url);
+        promptRes.setPrompt(prompt);
+        return callApi(promptRes);
     }
 
     private <T> T xmlConvertToVo(String xml, Class<T> voClass) throws JAXBException {

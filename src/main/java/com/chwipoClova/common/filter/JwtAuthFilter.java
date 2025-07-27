@@ -37,7 +37,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String url = request.getRequestURI();
         if (Arrays.stream(authorizeUrl).noneMatch(url::equals)) {
             // Access / Refresh 헤더와 쿠키에서 토큰을 가져옴.
-            String accessToken = jwtProviderService.getToken(request, JwtProviderService.ACCESS_TOKEN);
+            String accessToken = jwtProviderService.getToken(request, JwtProviderService.AUTHORIZATION);
             String loginId;
             // TODO 테스트 고정된 값 삭제 필요
             if (StringUtils.equals(accessToken, "thewoowon") ) {

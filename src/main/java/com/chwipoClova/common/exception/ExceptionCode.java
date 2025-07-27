@@ -41,6 +41,8 @@ public enum ExceptionCode {
 
     RECRUIT_TITLE_NULL("871", "채용공고 기업명이 없습니다."),
 
+    RECRUIT_URL_NULL("872", "채용공고 URL이 없습니다.."),
+
     INTERVIEW_NULL("880", "면접 정보가 올바르지 않습니다."),
 
     INTERVIEW_LIST_OVER("881", "면접 최대 개수를 초과하였습니다."),
