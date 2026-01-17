@@ -24,7 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -47,7 +46,7 @@ public class FeedbackService {
     private final ApiService apiService;
 
     @Transactional
-    public CommonResponse insertFeedback(String allQuestionData, String allAnswerData, List<FeedbackInsertReq> feedbackInsertListReq) {
+    public void insertFeedback(String allQuestionData, String allAnswerData, List<FeedbackInsertReq> feedbackInsertListReq) {
 
         // TODO 피드백 연동 필요함 답변이 있는 경우만 전달하자
         // 키워드
@@ -58,8 +57,6 @@ public class FeedbackService {
 
         // 피드백 매핑
         setApiFeedbackData(apiKeywordRst, apiBestRst, feedbackInsertListReq);
-
-        return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 
     public List<FeedbackListRes> selectFeedbackList(Long qaId) {
@@ -81,7 +78,7 @@ public class FeedbackService {
     }
 
     @Transactional
-    public CommonResponse generateFeedback(FeedbackGenerateReq feedbackGenerateReq, Interview interview, List<Qa> qaList) throws IOException {
+    public CommonResponse generateFeedback(FeedbackGenerateReq feedbackGenerateReq, Interview interview, List<Qa> qaList) {
         Long userId = feedbackGenerateReq.getUserId();
 
         userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
@@ -104,12 +101,10 @@ public class FeedbackService {
             if (StringUtils.isNotBlank(answer)) {
                 answerCnt.getAndIncrement();
 
-                qa.getQuestion();
-
-                questionStringBuilder.append(answerCnt.get() + ". " + getDelStartNum(qa.getQuestion()));
+                questionStringBuilder.append(answerCnt.get()).append(". ").append(getDelStartNum(qa.getQuestion()));
                 questionStringBuilder.append("\n");
 
-                answerStringBuilder.append(answerCnt.get() + ". " + qa.getAnswer());
+                answerStringBuilder.append(answerCnt.get()).append(". ").append(qa.getAnswer());
                 answerStringBuilder.append("\n");
 
                 FeedbackInsertReq feedbackInsertReq = new FeedbackInsertReq();
@@ -147,7 +142,6 @@ public class FeedbackService {
         }
     }
 
-    @Transactional
     public void insertAllFeedback(List<FeedBackApiRes> feedBackApiListRes) {
         feedBackApiListRes.forEach(feedBackApiRes -> {
             Long qaId = feedBackApiRes.getQaId();

@@ -16,4 +16,6 @@ public class InterviewInsertReq {
     @Schema(description = "채용공고내용", example = "삼성채용", name = "recruitContent")
     private String recruitContent;
 
+    @Schema(description = "URL 여부", example = "false", name = "urlCk")
+    private boolean urlCk;
 }

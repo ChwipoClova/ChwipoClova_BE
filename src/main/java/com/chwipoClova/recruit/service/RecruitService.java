@@ -54,21 +54,7 @@ public class RecruitService {
 
     private final RecruitRepository recruitRepository;
 
-    //private final ApiUtils apiUtils;
-
     private final ApiService apiService;
-
-    @Value("${api.url.base}")
-    private String apiBaseUrl;
-
-    @Value("${api.url.ocr}")
-    private String ocr;
-
-    @Value("${api.url.count}")
-    private String count;
-
-    @Value("${api.url.recruit}")
-    private String recruit;
 
     @Value("${recruit.target.word1}")
     private String targetWord1;
@@ -100,13 +86,17 @@ public class RecruitService {
         int apiBaseTokenLimit = promptService.getMaxToken("RC");
 
         if (org.apache.commons.lang3.StringUtils.isNotBlank(recruitContent)) {
+            String summary;
 
-            // 토큰 수 계산
-            apiService.countTokenLimitCk(recruitContent, apiBaseTokenLimit);
-
-            // 채용공고 요약 실행
-            String summary = apiService.summaryRecruit(recruitContent);
-
+            // URL 채용공고 요약 실행 시 추가 요약 X
+            if (recruitInsertReq.isUrlCk()) {
+                summary = recruitContent;
+            } else {
+                // 토큰 수 계산
+                apiService.countTokenLimitCk(recruitContent, apiBaseTokenLimit);
+                // 채용공고 요약 실행
+                summary = apiService.summaryRecruit(recruitContent);
+            }
             // 채용공고에서 제목 추출
             String title = getRecruitTitle(summary);
 
@@ -173,14 +163,6 @@ public class RecruitService {
                     .originText(resumeTxt)
                     .summary(summary)
                     .build();
-
-            // 파일 삭제
-/*            try {
-                Files.delete(savePath);
-            } catch (IOException e) {
-                log.error("Failed to delete file: {}", savePath, e);
-                throw new CommonException("File deletion failed", ExceptionCode.SERVER_ERROR.getCode());
-            }*/
         }
 
         Recruit recruitRst = recruitRepository.save(recruit);
@@ -200,7 +182,7 @@ public class RecruitService {
 
             // 기업명 고정
             for (String splitSummary : splitSummaryList) {
-                if (splitSummary.indexOf(".") != -1) {
+                if (splitSummary.contains(".")) {
                     String num = splitSummary.substring(0, splitSummary.indexOf("."));
                     if (org.apache.commons.lang3.StringUtils.isNumeric(num)) {
                         int index1 = splitSummary.indexOf(targetWord1);
@@ -294,7 +276,7 @@ public class RecruitService {
             return apiRes.getData();
         } catch (Exception e) {
             log.error("Error parsing JSON: {}", e.getMessage());
-            throw new CommonException("채용공고 URL 파싱 오류: " + e.getMessage(), ExceptionCode.SERVER_ERROR.getCode());
+            throw new CommonException(e.getMessage(), ExceptionCode.SERVER_ERROR.getCode());
         }
     }
 }

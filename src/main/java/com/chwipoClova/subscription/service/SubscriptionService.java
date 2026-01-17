@@ -1,7 +1,6 @@
 package com.chwipoClova.subscription.service;
 
 import com.chwipoClova.article.entity.Feed;
-import com.chwipoClova.article.repository.FeedCustomRepository;
 import com.chwipoClova.article.repository.FeedRepository;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
@@ -17,6 +16,7 @@ import com.chwipoClova.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
@@ -34,31 +34,41 @@ public class SubscriptionService {
 
     private final UserRepository userRepository;
 
-    private final FeedCustomRepository feedCustomRepository;
-
     private final FeedRepository feedRepository;
 
     private final EmailService emailService;
 
+    @Transactional
     public CommonResponse subscription(SubscriptionReq subscriptionReq) {
         Long userId = subscriptionReq.getUserId();
         User user = userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        Subscription subscription = new Subscription();
-        subscription.setName(user.getName());
-        subscription.setEmail(user.getEmail());
-        subscription.setThumbnail(user.getThumbnailImage());
-        subscription.setDivision("K");
-        subscription.setPublished(Instant.now());
-        subscription.setDelFlag(0);
-        subscription.setUser(user);
-        subscriptionRepository.save(subscription);
+
+        Optional<Subscription> userSubscription = subscriptionRepository.findByUser_UserId(userId);
+        if (userSubscription.isPresent()) {
+            // 이미 구독 중인 경우
+            // 삭제 여부 변경
+            userSubscription.get().setDelFlag(0);
+        } else {
+            // 신규 저장
+            Subscription subscription = new Subscription();
+            subscription.setName(user.getName());
+            subscription.setEmail(user.getEmail());
+            subscription.setThumbnail(user.getThumbnailImage());
+            subscription.setDivision("K");
+            subscription.setPublished(Instant.now());
+            subscription.setDelFlag(0);
+            subscription.setUser(user);
+            subscriptionRepository.save(subscription);
+        }
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 
+    @Transactional
     public CommonResponse subscriptionCancel(SubscriptionReq subscriptionReq) {
         Long userId = subscriptionReq.getUserId();
         Subscription subscription = subscriptionRepository.findByUser_UserId(userId).orElseThrow(() -> new CommonException(ExceptionCode.SUBSCRIPTION_NULL.getMessage(), ExceptionCode.SUBSCRIPTION_NULL.getCode()));
-        subscriptionRepository.deleteById(subscription.getId());
+        subscription.setDelFlag(1); // 논리 삭제로 변경
+        // subscriptionRepository.deleteById(subscription.getId());
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 
@@ -79,18 +89,11 @@ public class SubscriptionService {
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 
-
-
-
     public CommonResponse subscriptionCheck(Long userId) {
         SubscriptionRes subscriptionRes = new SubscriptionRes();
         Optional<Subscription> subscription = subscriptionRepository.findByUser_UserId(userId);
 
-        if (subscription.isPresent()) {
-            subscriptionRes.setCheck(true);
-        } else {
-            subscriptionRes.setCheck(false);
-        }
+        subscriptionRes.setCheck(subscription.isPresent());
         return new CommonResponse<>(MessageCode.OK.getCode(), subscriptionRes, MessageCode.OK.getMessage());
     }
 }

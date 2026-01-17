@@ -1,6 +1,7 @@
 package com.chwipoClova.subscription.entity;
 
 import com.chwipoClova.user.entity.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -9,6 +10,7 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -51,4 +53,13 @@ public class Subscription {
     @Column(name = "delFlag", nullable = false)
     private Integer delFlag;
 
+    @Column(name = "modifyDate")
+    @Schema(description = "수정일")
+    private Date modifyDate;
+
+    // @PreUpdate 메서드 정의 (업데이트 시 호출)
+    @PreUpdate
+    public void preUpdate() {
+        this.modifyDate = new Date(); // 현재 날짜와 시간으로 수정일 업데이트
+    }
 }

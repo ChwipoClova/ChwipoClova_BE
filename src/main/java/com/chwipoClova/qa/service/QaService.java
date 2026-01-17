@@ -30,8 +30,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -81,19 +83,19 @@ public class QaService {
     }
 
     @Transactional
-    public CommonResponse insertAnswer(QaAnswerInsertReq qaAnswerInsertReq, Interview interview) throws IOException {
+    public CommonResponse<?> insertAnswer(QaAnswerInsertReq qaAnswerInsertReq, Interview interview)  {
         Long interviewId = qaAnswerInsertReq.getInterviewId();
 
         List<QaAnswerDataInsertReq> qaAnswerDataInsertReqList = qaAnswerInsertReq.getAnswerData();
 
         List<FeedbackInsertReq> feedbackInsertListReq = new ArrayList<>();
 
-        Qa lastQa = findFirstByInterviewInterviewIdAndDelFlagOrderByQaIdDesc(interviewId);
-        Long lastQaId = lastQa.getQaId();
+        //Qa lastQa = findFirstByInterviewInterviewIdAndDelFlagOrderByQaIdDesc(interviewId);
+        //Long lastQaId = lastQa.getQaId();
 
         StringBuilder questionStringBuilder = new StringBuilder();
         StringBuilder answerStringBuilder = new StringBuilder();
-        AtomicBoolean lastCkAtomic = new AtomicBoolean(false);
+        //AtomicBoolean lastCkAtomic = new AtomicBoolean(false);
 
         AtomicLong answerCnt = new AtomicLong();
         qaAnswerDataInsertReqList.forEach(qaAnswerDataInsertReq -> {
@@ -107,16 +109,16 @@ public class QaService {
                         .build();
                 qa.edit(qaEditor);
 
-                if (Objects.equals(lastQaId, qa.getQaId())) {
+/*                if (Objects.equals(lastQaId, qa.getQaId())) {
                     lastCkAtomic.set(true);
-                }
+                }*/
 
                 answerCnt.getAndIncrement();
 
-                questionStringBuilder.append(answerCnt.get() + ". " + getDelStartNum(qa.getQuestion()));
+                questionStringBuilder.append(answerCnt.get()).append(". ").append(getDelStartNum(qa.getQuestion()));
                 questionStringBuilder.append("\n");
 
-                answerStringBuilder.append(answerCnt.get() + ". " + qa.getAnswer());
+                answerStringBuilder.append(answerCnt.get()).append(". ").append(qa.getAnswer());
                 answerStringBuilder.append("\n");
 
                 // 피드백 정보
@@ -130,12 +132,13 @@ public class QaService {
         });
 
         // 마지막 답변이 있을 경우 면접 완료 처리 및 피드백 생성
-        Boolean lastCk = lastCkAtomic.get();
+        //Boolean lastCk = lastCkAtomic.get();
 
         // 마지막 문제 넘기기 눌렀을 경우
-        Integer lastBtnCk = qaAnswerInsertReq.getLastBtnCk() == null ? 0 : qaAnswerInsertReq.getLastBtnCk();
+        int lastBtnCk = qaAnswerInsertReq.getLastBtnCk() == null ? 0 : qaAnswerInsertReq.getLastBtnCk();
 
-        if (lastCk || lastBtnCk == 1) {
+        //if (lastCk || lastBtnCk == 1) {
+        if (lastBtnCk == 1) {
 
             String allQuestionData = questionStringBuilder.toString().trim();
             String allAnswerData = answerStringBuilder.toString().trim();
@@ -143,6 +146,7 @@ public class QaService {
             // 면접관의 속마음
             String apiFeelRst = apiService.feel(allAnswerData);
 
+            // 모범답안, 키워드
             feedbackService.insertFeedback(allQuestionData, allAnswerData, feedbackInsertListReq);
 
             // 면접 완료 처리

@@ -15,4 +15,6 @@ public class RecruitInsertReq {
 
     private MultipartFile file;
 
+    @Schema(description = "URL 여부", example = "false", name = "urlCk")
+    private boolean urlCk;
 }
