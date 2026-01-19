@@ -9,7 +9,8 @@ import java.util.Objects;
 @Getter
 public enum UserLoginType {
     KAKAO("kakao",1, "카카오"),
-    GOOGLE("google", 2, "구글")
+    GOOGLE("google", 2, "구글"),
+    APPLE("apple", 3, "애플")
     ;
 
     private final String registrationId;

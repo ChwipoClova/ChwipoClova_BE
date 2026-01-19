@@ -66,10 +66,10 @@ public class WebSecurityConfig {
 
                 )
                 //.oauth2Login(oauth -> oauth.userInfoEndpoint(endpoint -> endpoint.userService(oAuth2UserService)))
-                .oauth2Login(configure ->
+/*                .oauth2Login(configure ->
                                 configure.userInfoEndpoint(config -> config.userService(oAuth2UserService))
                                         .successHandler(oAuth2AuthenticationSuccessHandler)
-                                        .failureHandler(oAuth2AuthenticationFailureHandler))
+                                        .failureHandler(oAuth2AuthenticationFailureHandler))*/
                 .addFilterBefore(new JwtAuthFilter(jwtProviderService, authorizeUrl), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
         ;

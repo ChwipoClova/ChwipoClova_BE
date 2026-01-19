@@ -1,5 +1,6 @@
 package com.chwipoClova.oauth2.dto;
 
+import com.chwipoClova.login.dto.GoogleLoginDto;
 import com.chwipoClova.oauth2.enums.UserLoginType;
 import org.apache.commons.lang3.StringUtils;
 
@@ -27,6 +28,17 @@ public class GoogleOAuth2UserInfo implements UserInfo {
         this.lastName = (String) attributes.get("family_name");
         this.nickName = (String) attributes.get("name");
         this.profileImageUrl = (String) attributes.get("picture");
+    }
+    public GoogleOAuth2UserInfo(GoogleLoginDto googleLoginDto) {
+        this.accessToken = "";
+        this.attributes = Map.of();
+        this.firstName = "";
+        this.lastName = "";
+        this.id = googleLoginDto.getSub();
+        this.email = googleLoginDto.getEmail();
+        this.name = googleLoginDto.getName();
+        this.nickName = googleLoginDto.getName();
+        this.profileImageUrl = googleLoginDto.getPicture();
     }
 
     @Override

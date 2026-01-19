@@ -6,7 +6,10 @@ import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.response.MessageCode;
 import com.chwipoClova.common.service.JwtProviderService;
 import com.chwipoClova.common.service.LogService;
+import com.chwipoClova.login.dto.AppleLoginDto;
+import com.chwipoClova.login.service.AppleTokenVerifier;
 import com.chwipoClova.oauth2.dto.UserInfo;
+import com.chwipoClova.oauth2.enums.UserLoginType;
 import com.chwipoClova.token.dto.TokenDto;
 import com.chwipoClova.user.dto.KakaoToken;
 import com.chwipoClova.user.dto.KakaoUserInfo;
@@ -16,6 +19,7 @@ import com.chwipoClova.user.request.UserLogoutReq;
 import com.chwipoClova.user.response.UserInfoRes;
 import com.chwipoClova.user.response.UserLoginRes;
 import com.chwipoClova.user.response.UserSnsUrlRes;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -72,6 +76,8 @@ public class UserService {
     private String redirectLocalUri;
 
     private final LogService logService;
+
+    private final AppleTokenVerifier appleTokenVerifier;
 
     public UserSnsUrlRes getKakaoUrl() {
         String kakaoUrl = kakaoAuthUrl + "?response_type=code" + "&client_id=" + clientId
@@ -280,6 +286,80 @@ public class UserService {
         } else {
             KakaoUserInfo kakaoUserInfo = requestOauthInfo(KakaoToken.builder().accessToken(token).build());
             return login(kakaoUserInfo, response);
+        }
+    }
+
+    public CommonResponse appleLogin(AppleLoginDto appleLoginDto, HttpServletResponse response) {
+        String email = appleLoginDto.getEmail();
+        String name = appleLoginDto.getName();
+        String token = appleLoginDto.getIdentityToken();
+
+        Claims claims = appleTokenVerifier.verify(token);
+        String snsId = claims.getSubject(); // sub
+        String docEmail = claims.get("email", String.class);
+        Integer snsType = UserLoginType.APPLE.getCode();
+
+        if (StringUtils.isNotBlank(email) || StringUtils.isNotBlank(name) || !StringUtils.equals(email, docEmail)) {
+            throw new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode());
+        }
+
+        Optional<User> userInfo = userRepository.findBySnsTypeAndSnsId(snsType, snsId);
+
+        // 유저 정보가 있다면 업데이트 없으면 등록
+        if (userInfo.isPresent()) {
+            User userInfoRst = userInfo.get();
+
+            Long userId = userInfoRst.getUserId();
+
+            String strUserId = String.valueOf(userId);
+
+            // 로그인 할때마다 토큰 새로 발급(갱신)
+            TokenDto tokenDto = jwtProviderService.createAllToken(strUserId);
+
+            // response 헤더에 Access Token / Refresh Token 넣음
+            jwtProviderService.setResponseNmtoken(response, tokenDto);
+
+            UserLoginRes userLoginRes = UserLoginRes.builder()
+                    .snsId(userInfoRst.getSnsId())
+                    .userId(userId)
+                    .email(userInfoRst.getEmail())
+                    .name(userInfoRst.getName())
+                    .snsType(userInfoRst.getSnsType())
+                    .thumbnailImage(userInfoRst.getThumbnailImage())
+                    .profileImage(userInfoRst.getProfileImage())
+                    .regDate(userInfoRst.getRegDate())
+                    .modifyDate(userInfoRst.getModifyDate())
+                    .build();
+            log.info("기존유저 {}, {}",userLoginRes.getUserId(), userLoginRes.getName());
+            // API 로그 적재
+            logService.loginUserLogSave(userLoginRes.getUserId(), "기존유저 " + userLoginRes.getUserId() + "," + userLoginRes.getName());
+            return new CommonResponse<>(String.valueOf(HttpStatus.OK.value()), userLoginRes, HttpStatus.OK.getReasonPhrase());
+        } else {
+            User user = User.builder()
+                    .snsId(snsId)
+                    .email(email)
+                    .name(name)
+                    .snsType(snsType)
+                    .thumbnailImage("")
+                    .profileImage("")
+                    .regDate(new Date())
+                    .build();
+            User userResult = userRepository.save(user);
+            log.info("신규유저 {}, {}",userResult.getUserId(), userResult.getName());
+
+            Long userId = userResult.getUserId();
+
+            String strUserId = String.valueOf(userId);
+
+            // 로그인 할때마다 토큰 새로 발급(갱신)
+            TokenDto tokenDto = jwtProviderService.createAllToken(strUserId);
+
+            // response 헤더에 Access Token / Refresh Token 넣음
+            jwtProviderService.setResponseNmtoken(response, tokenDto);
+
+            // API 로그 적재
+            logService.newUserLogSave(userResult.getUserId(), "신규유저 " + userResult.getUserId() + userResult.getName());
+            return new CommonResponse<>(MessageCode.NEW_USER.getCode(), null, MessageCode.NEW_USER.getMessage());
         }
     }
 }
