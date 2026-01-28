@@ -104,7 +104,7 @@ public class UserController {
     }
 
     @Operation(summary = "탈퇴", description = "탈퇴")
-    @GetMapping("/deleteUser")
+    @DeleteMapping("/deleteUser")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK")
     }
