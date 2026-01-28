@@ -383,6 +383,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public CommonResponse<?> deleteUser(User user) {
         Long userId = user.getUserId();
         List<Interview> interviewList = interviewRepository.findByUser_UserId(userId);
@@ -407,6 +408,9 @@ public class UserService {
 
         //  구독 삭제
         subscriptionRepository.deleteByUser(user);
+
+        // 유저 삭제
+        userRepository.deleteById(userId);
 
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
