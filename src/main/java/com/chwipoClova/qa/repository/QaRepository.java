@@ -1,7 +1,6 @@
 package com.chwipoClova.qa.repository;
 
 import com.chwipoClova.qa.entity.Qa;
-import com.chwipoClova.resume.entity.Resume;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +22,7 @@ public interface QaRepository extends JpaRepository<Qa, Long> {
     int initQa(@Param("interviewId") Long interviewId, @Param("delFlag") Integer delFlag);
 
     void deleteByInterviewInterviewId(Long interviewId);
+
+    List<Qa> findByInterview_InterviewId(Long interviewId);
+
 }

@@ -1,7 +1,6 @@
 package com.chwipoClova.feedback.repository;
 
 import com.chwipoClova.feedback.entity.Feedback;
-import com.chwipoClova.interview.entity.Interview;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,4 +13,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     Optional<Feedback> findByQaQaIdAndType(Long qaId, Integer Type);
 
     void deleteByQaQaId(Long qaId);
+
+
 }

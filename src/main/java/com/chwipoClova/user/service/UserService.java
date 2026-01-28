@@ -6,10 +6,18 @@ import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.response.MessageCode;
 import com.chwipoClova.common.service.JwtProviderService;
 import com.chwipoClova.common.service.LogService;
+import com.chwipoClova.feedback.repository.FeedbackRepository;
+import com.chwipoClova.interview.entity.Interview;
+import com.chwipoClova.interview.repository.InterviewRepository;
 import com.chwipoClova.login.dto.AppleLoginDto;
 import com.chwipoClova.login.service.AppleTokenVerifier;
 import com.chwipoClova.oauth2.dto.UserInfo;
 import com.chwipoClova.oauth2.enums.UserLoginType;
+import com.chwipoClova.qa.entity.Qa;
+import com.chwipoClova.qa.repository.QaRepository;
+import com.chwipoClova.recruit.repository.RecruitRepository;
+import com.chwipoClova.resume.repository.ResumeRepository;
+import com.chwipoClova.subscription.repository.SubscriptionRepository;
 import com.chwipoClova.token.dto.TokenDto;
 import com.chwipoClova.user.dto.KakaoToken;
 import com.chwipoClova.user.dto.KakaoUserInfo;
@@ -37,6 +45,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -50,6 +59,18 @@ public class UserService {
     private final RestTemplate restTemplate;
 
     private final JwtProviderService jwtProviderService;
+
+    private final InterviewRepository interviewRepository;
+
+    private final FeedbackRepository feedbackRepository;
+
+    private final QaRepository qaRepository;
+
+    private final ResumeRepository resumeRepository;
+
+    private final RecruitRepository recruitRepository;
+
+    private final SubscriptionRepository subscriptionRepository;
 
     @Value("${kakao.url.auth}")
     private String kakaoAuthUrl;
@@ -290,16 +311,15 @@ public class UserService {
     }
 
     public CommonResponse appleLogin(AppleLoginDto appleLoginDto, HttpServletResponse response) {
-        String email = appleLoginDto.getEmail();
         String name = appleLoginDto.getName();
         String token = appleLoginDto.getIdentityToken();
 
         Claims claims = appleTokenVerifier.verify(token);
         String snsId = claims.getSubject(); // sub
-        String docEmail = claims.get("email", String.class);
+        String email = claims.get("email", String.class);
         Integer snsType = UserLoginType.APPLE.getCode();
 
-        if (StringUtils.isNotBlank(email) || StringUtils.isNotBlank(name) || !StringUtils.equals(email, docEmail)) {
+        if (StringUtils.isNotBlank(email) || StringUtils.isNotBlank(name)) {
             throw new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode());
         }
 
@@ -361,5 +381,33 @@ public class UserService {
             logService.newUserLogSave(userResult.getUserId(), "신규유저 " + userResult.getUserId() + userResult.getName());
             return new CommonResponse<>(MessageCode.NEW_USER.getCode(), null, MessageCode.NEW_USER.getMessage());
         }
+    }
+
+    public CommonResponse<?> deleteUser(User user) {
+        Long userId = user.getUserId();
+        List<Interview> interviewList = interviewRepository.findByUser_UserId(userId);
+        for (Interview interview : interviewList) {
+           Long interviewId = interview.getInterviewId();
+            List<Qa> qaList = qaRepository.findByInterview_InterviewId(interviewId);
+            for (Qa qa : qaList) {
+                // feedback 삭제
+                feedbackRepository.deleteByQaQaId(qa.getQaId());
+            }
+            // qa 삭제
+            qaRepository.deleteByInterviewInterviewId(interviewId);
+        }
+        // interview 삭제
+        interviewRepository.deleteByUser(user);
+
+        //  이력서 삭제
+        resumeRepository.deleteByUser(user);
+
+        //  채용공고 삭제
+        recruitRepository.deleteByUser(user);
+
+        //  구독 삭제
+        subscriptionRepository.deleteByUser(user);
+
+        return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 }

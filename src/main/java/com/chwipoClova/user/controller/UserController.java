@@ -2,6 +2,7 @@ package com.chwipoClova.user.controller;
 
 import com.chwipoClova.common.dto.UserDetailsImpl;
 import com.chwipoClova.common.response.CommonResponse;
+import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.request.UserLogoutReq;
 import com.chwipoClova.user.response.UserInfoRes;
 import com.chwipoClova.user.response.UserLoginRes;
@@ -100,5 +101,17 @@ public class UserController {
                                  @Parameter(hidden = true) HttpServletResponse response
     ) {
         return userService.logout(request, response, userLogoutReq);
+    }
+
+    @Operation(summary = "탈퇴", description = "탈퇴")
+    @GetMapping("/deleteUser")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK")
+    }
+    )
+    public CommonResponse<?> deleteUser(Authentication authentication) {
+        UserDetailsImpl userDetailsImpl = (UserDetailsImpl)authentication.getPrincipal();
+        User user = userDetailsImpl.getUser();
+        return userService.deleteUser(user);
     }
 }
