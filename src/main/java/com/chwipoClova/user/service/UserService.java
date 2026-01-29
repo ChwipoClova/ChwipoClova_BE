@@ -311,7 +311,7 @@ public class UserService {
     }
 
     public CommonResponse appleLogin(AppleLoginDto appleLoginDto, HttpServletResponse response) {
-        String name = appleLoginDto.getName();
+        // String name = appleLoginDto.getName();
         String token = appleLoginDto.getIdentityToken();
 
         Claims claims = appleTokenVerifier.verify(token);
@@ -319,7 +319,7 @@ public class UserService {
         String email = claims.get("email", String.class);
         Integer snsType = UserLoginType.APPLE.getCode();
 
-        if (StringUtils.isNotBlank(email) || StringUtils.isNotBlank(name)) {
+        if (StringUtils.isNotBlank(email)) {
             throw new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode());
         }
 
