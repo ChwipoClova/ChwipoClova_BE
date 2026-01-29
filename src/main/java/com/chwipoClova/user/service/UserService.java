@@ -311,7 +311,8 @@ public class UserService {
     }
 
     public CommonResponse appleLogin(AppleLoginDto appleLoginDto, HttpServletResponse response) {
-        String name = appleLoginDto.getName();
+        //String name = appleLoginDto.getName();
+        String name = "애플유저";
         String token = appleLoginDto.getIdentityToken();
 
         Claims claims = appleTokenVerifier.verify(token);
