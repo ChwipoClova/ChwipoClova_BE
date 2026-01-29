@@ -320,7 +320,7 @@ public class UserService {
         String email = claims.get("email", String.class);
         Integer snsType = UserLoginType.APPLE.getCode();
 
-        if (StringUtils.isNotBlank(email) || StringUtils.isNotBlank(name)) {
+        if (StringUtils.isBlank(email) || StringUtils.isBlank(name)) {
             throw new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode());
         }
 
