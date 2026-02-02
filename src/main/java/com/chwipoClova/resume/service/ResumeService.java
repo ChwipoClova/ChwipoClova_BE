@@ -11,7 +11,9 @@ import com.chwipoClova.common.utils.FileUtil;
 import com.chwipoClova.prompt.service.PromptService;
 import com.chwipoClova.resume.entity.Resume;
 import com.chwipoClova.resume.entity.ResumeEditor;
+import com.chwipoClova.resume.entity.ResumeTemp;
 import com.chwipoClova.resume.repository.ResumeRepository;
+import com.chwipoClova.resume.repository.ResumeTempRepository;
 import com.chwipoClova.resume.request.ResumeDeleteOldReq;
 import com.chwipoClova.resume.request.ResumeDeleteReq;
 import com.chwipoClova.resume.response.ResumeListRes;
@@ -59,6 +61,8 @@ public class ResumeService {
     private Integer resumeLimitTextSize;
 
     private final ResumeRepository resumeRepository;
+
+    private final ResumeTempRepository resumeTempRepository;
 
     private final UserRepository userRepository;
 
@@ -200,9 +204,21 @@ public class ResumeService {
 
         List<Resume> resumeList = findByUserUserIdAndDelFlagOrderByRegDate(user.getUserId());
 
+        List<ResumeTemp> resumeTempList = resumeTempRepository.findAll();
+
         resumeList.forEach(resume -> {
             ResumeListRes resumeListRes = ResumeListRes.builder()
                     .resumeId(resume.getResumeId())
+                    .fileName(resume.getOriginalFileName())
+                    .regDate(resume.getRegDate())
+                    .content(resume.getOriginText())
+                    .build();
+            resumeListResList.add(resumeListRes);
+        });
+
+        resumeTempList.forEach(resume -> {
+            ResumeListRes resumeListRes = ResumeListRes.builder()
+                    .resumeId(resume.getId())
                     .fileName(resume.getOriginalFileName())
                     .regDate(resume.getRegDate())
                     .content(resume.getOriginText())
@@ -220,6 +236,10 @@ public class ResumeService {
     @Transactional
     public CommonResponse deleteResume(ResumeDeleteReq resumeDeleteReq) {
         Long resumeId = resumeDeleteReq.getResumeId();
+        if (resumeId == 1) {
+            throw new CommonException(ExceptionCode.RESUME_NOT_DELETE.getMessage(), ExceptionCode.RESUME_NOT_DELETE.getCode());
+        }
+
         Long userId = resumeDeleteReq.getUserId();
 
         userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));

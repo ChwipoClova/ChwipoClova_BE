@@ -29,6 +29,8 @@ import com.chwipoClova.recruit.request.RecruitInsertReq;
 import com.chwipoClova.recruit.response.RecruitInsertRes;
 import com.chwipoClova.recruit.service.RecruitService;
 import com.chwipoClova.resume.entity.Resume;
+import com.chwipoClova.resume.entity.ResumeTemp;
+import com.chwipoClova.resume.repository.ResumeTempRepository;
 import com.chwipoClova.resume.service.ResumeService;
 import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.repository.UserRepository;
@@ -65,6 +67,8 @@ public class InterviewService {
 
     private final FeedbackService feedbackService;
 
+    private final ResumeTempRepository resumeTempRepository;
+
     @Value("${limit.size.interview}")
     private Integer interviewLimitSize;
 
@@ -74,8 +78,21 @@ public class InterviewService {
         Long resumeId = interviewInsertReq.getResumeId();
         String recruitContent = interviewInsertReq.getRecruitContent();
 
+        Resume resume = null;
         User user = userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        Resume resume = resumeService.findByUserUserIdAndResumeIdAndDelFlag(userId, resumeId).orElseThrow(() -> new CommonException(ExceptionCode.RESUME_NULL.getMessage(), ExceptionCode.RESUME_NULL.getCode()));
+        Optional<Resume> resumeOpt =
+                resumeService.findByUserUserIdAndResumeIdAndDelFlag(userId, resumeId);
+
+        if (resumeOpt.isPresent()) {
+            resume = resumeOpt.get();
+        } else {
+            ResumeTemp resumeTemp = resumeTempRepository.findById(resumeId)
+                    .orElseThrow(() -> new CommonException(
+                            ExceptionCode.RESUME_NULL.getMessage(),
+                            ExceptionCode.RESUME_NULL.getCode()
+                    ));
+            resume = convertToResume(resumeTemp);
+        }
 
         // 채용 공고 등록 및 조회
         RecruitInsertReq recruitInsertReq = new RecruitInsertReq();
@@ -109,6 +126,19 @@ public class InterviewService {
                 .title(interviewRst.getTitle())
                 .regDate(interviewRst.getRegDate())
                 .questionData(questionData)
+                .build();
+    }
+
+    private Resume convertToResume(ResumeTemp resumeTemp) {
+        return Resume.builder()
+                .resumeId(resumeTemp.getId())
+                .fileName(resumeTemp.getFileName())
+                .filePath(resumeTemp.getFilePath())
+                .fileSize(resumeTemp.getFileSize())
+                .summary(resumeTemp.getSummary())
+                .originText(resumeTemp.getOriginText())
+                .originalFileName(resumeTemp.getOriginalFileName())
+                .delFlag(resumeTemp.getDelFlag())
                 .build();
     }
 

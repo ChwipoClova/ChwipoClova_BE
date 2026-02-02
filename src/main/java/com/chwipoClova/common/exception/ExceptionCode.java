@@ -37,6 +37,8 @@ public enum ExceptionCode {
 
     RESUME_TOKEN_OVER("862", "이력서의 글자 수를 3,000자 이하로 줄여주세요"),
 
+    RESUME_NOT_DELETE("863", "삭제할 수 없는 이력서 입니다."),
+
     RECRUIT_CONTENT_NULL("870", "채용공고 정보가 올바르지 않습니다."),
 
     RECRUIT_TITLE_NULL("871", "채용공고 기업명이 없습니다."),
