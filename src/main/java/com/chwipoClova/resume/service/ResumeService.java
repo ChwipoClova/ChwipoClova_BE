@@ -29,16 +29,15 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -98,7 +97,8 @@ public class ResumeService {
             if (org.apache.commons.lang3.StringUtils.isBlank(contentType) || !contentType.toLowerCase().contains(uploadType)) {
                 throw new CommonException(ExceptionCode.FILE_EXT_PDF.getMessage(), ExceptionCode.FILE_EXT_PDF.getCode());
             }
-            originalName = file.getOriginalFilename();
+            originalName = URLDecoder.decode(Objects.requireNonNull(file.getOriginalFilename()), StandardCharsets.UTF_8);
+
             assert originalName != null;
 
             // 기존 이력서 목록이 3건 이상이면 오류 발생
